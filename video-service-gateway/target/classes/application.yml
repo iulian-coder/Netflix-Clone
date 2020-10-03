@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: GATEWAY-SERVICE
+  cloud:
+    gateway:
+      routes:
+        - id: video-service
+          uri: lb://VIDEO-SERVICE
+          predicates:
+            - Path=/api/v1/video/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: video-service
+                fallbackuri: forward:/videoServiceFallBack
+        - id: video-recommendation
+          uri: lb://VIDEO-RECOMMENDATION
+          predicates:
+            - Path=/api/v1/recommendation/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: video-recommendation
+                fallbackuri: forward:/videoRecommendationFallBack
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      default: http://localhost:8761/eureka
+
+server:
+  port: 8989
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: hystrix.stream
+
+hystrix:
+  command:
+    fallbackcmd:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 5000
